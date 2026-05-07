@@ -1,0 +1,179 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  FACEBOOK
+}
+
+enum StoreType {
+  FOOD
+  GROCERY
+  PHARMACY
+  ELECTRONICS
+  FASHION
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  SHIPPING
+  COMPLETED
+  CANCELLED
+}
+
+enum UserStatus {
+  PENDING    // Mới đăng ký, chờ xác thực email/SĐT
+  ACTIVE     // Đang hoạt động bình thường
+  INACTIVE   // Tạm dừng hoạt động (người dùng tự đóng)
+  BANNED     // Bị quản trị viên khóa do vi phạm
+}
+
+model User {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  password     String?
+  fullName     String?
+  phone        String?      @unique
+  
+  // Trạng thái tài khoản
+  status       UserStatus   @default(PENDING)
+  
+  // Xác thực
+  isEmailVerified Boolean   @default(false)
+  isPhoneVerified Boolean   @default(false)
+  
+  provider     AuthProvider @default(LOCAL)
+  providerId   String?
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  // Quan hệ cũ giữ nguyên
+  roles        Role[]       @relation("UserRoles")
+  tokens       Token[]
+  store        Store?       @relation("StoreOwner")
+  orders       Order[]      @relation("CustomerOrders")
+  driverDeliveries   Delivery[]   @relation("DriverDeliveries")
+}
+
+model Role {
+  id          String  @id @default(uuid())
+  name        String  @unique // e.g. 'ADMIN', 'CUSTOMER', 'DRIVER'
+  description String?
+
+  users User[] @relation("UserRoles")
+}
+
+model Token {
+  id           String   @id @default(uuid())
+  userId       String
+  refreshToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Store {
+  id          String    @id @default(uuid())
+  name        String
+  type        StoreType @default(FOOD)
+  address     String
+  description String?
+  ownerId     String    @unique
+  owner       User      @relation("StoreOwner", fields: [ownerId], references: [id])
+  
+  products    Product[]
+  orders      Order[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Category {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  products Product[]
+}
+
+model Product {
+  id           String    @id @default(uuid())
+  name         String
+  description  String?
+  price        Float
+  stock        Int       @default(0)
+  image        String?
+  isActive     Boolean   @default(true)
+
+  categoryId   String
+  category     Category  @relation(fields: [categoryId], references: [id])
+  
+  storeId      String
+  store        Store     @relation(fields: [storeId], references: [id])
+  
+  orderItems   OrderItem[]
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  totalAmount     Float
+  shippingAddress String
+  status          OrderStatus @default(PENDING)
+  
+  // Khách hàng đặt đơn
+  customerId      String
+  customer        User        @relation("CustomerOrders", fields: [customerId], references: [id])
+  
+  // Cửa hàng nhận đơn
+  storeId         String
+  store           Store       @relation(fields: [storeId], references: [id])
+  
+  items           OrderItem[]
+  delivery        Delivery?
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model OrderItem {
+  id           String  @id @default(uuid())
+  orderId      String
+  order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  productId    String
+  product      Product @relation(fields: [productId], references: [id])
+  
+  quantity     Int
+  priceAtOrder Float   // Lưu giá tại thời điểm đặt để tránh thay đổi sau này
+}
+
+model Delivery {
+  id         String   @id @default(uuid())
+  orderId    String   @unique
+  order      Order    @relation(fields: [orderId], references: [id])
+  
+  // Tài xế nhận đơn
+  driverId   String?
+  driver     User?    @relation("DriverDeliveries", fields: [driverId], references: [id])
+  
+  // Tọa độ real-time
+  currentLat Float?
+  currentLng Float?
+  
+  updatedAt  DateTime @updatedAt
+}

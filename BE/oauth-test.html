@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OAuth Test Page</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f0f1a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      background: #1a1a2e;
+      border: 1px solid #2d2d4e;
+      border-radius: 16px;
+      padding: 36px;
+      width: 100%;
+      max-width: 540px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 4px; color: #a78bfa; }
+    .subtitle { font-size: 0.85rem; color: #64748b; margin-bottom: 28px; }
+    .section-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+    .btn-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px; }
+    .btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.15s, opacity 0.15s;
+    }
+    .btn:hover { transform: translateY(-2px); opacity: 0.9; }
+    .btn-google { background: #fff; color: #1f1f1f; }
+    .btn-facebook { background: #1877f2; color: #fff; }
+    .btn svg { width: 22px; height: 22px; flex-shrink: 0; }
+    .divider {
+      border: none;
+      border-top: 1px solid #2d2d4e;
+      margin: 20px 0;
+    }
+    label { font-size: 0.85rem; color: #94a3b8; display: block; margin-bottom: 6px; }
+    input, textarea {
+      width: 100%;
+      background: #0f0f1a;
+      border: 1px solid #2d2d4e;
+      border-radius: 8px;
+      color: #e2e8f0;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus { border-color: #a78bfa; }
+    textarea { min-height: 140px; resize: vertical; font-family: 'Consolas', monospace; font-size: 0.82rem; }
+    .result-box {
+      background: #0f0f1a;
+      border: 1px solid #2d2d4e;
+      border-radius: 10px;
+      padding: 16px;
+      min-height: 80px;
+      font-size: 0.82rem;
+      font-family: 'Consolas', monospace;
+      color: #7dd3fc;
+      white-space: pre-wrap;
+      word-break: break-all;
+      display: none;
+    }
+    .result-box.visible { display: block; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      margin-left: 8px;
+    }
+    .badge-success { background: #14532d; color: #4ade80; }
+    .badge-error { background: #450a0a; color: #f87171; }
+    .copy-btn {
+      background: #2d2d4e;
+      border: none;
+      border-radius: 6px;
+      color: #a78bfa;
+      padding: 4px 12px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      margin-left: 8px;
+      transition: background 0.15s;
+    }
+    .copy-btn:hover { background: #3d3d6e; }
+    .token-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>🔐 OAuth Test Page</h1>
+  <p class="subtitle">Test Google &amp; Facebook OAuth — không cần Frontend thật</p>
+
+  <!-- OAuth Buttons -->
+  <p class="section-title">Đăng nhập OAuth</p>
+  <div class="btn-group">
+    <a class="btn btn-google" href="http://localhost:3000/api/auth/google" target="_blank">
+      <svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+      Đăng nhập với Google
+    </a>
+    <a class="btn btn-facebook" href="http://localhost:3000/api/auth/facebook" target="_blank">
+      <svg viewBox="0 0 24 24" fill="white"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073c0 6.028 4.388 11.023 10.125 11.927v-8.437H7.078v-3.49h3.047V9.43c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.235 2.686.235v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.253h3.328l-.532 3.49h-2.796v8.437C19.612 23.096 24 18.1 24 12.073z"/></svg>
+      Đăng nhập với Facebook
+    </a>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Paste token from OAuth result -->
+  <p class="section-title">Paste Token để test API</p>
+  <label>Access Token (từ kết quả OAuth hoặc login)</label>
+  <input type="text" id="accessToken" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." />
+
+  <button class="btn" style="background:#7c3aed;color:white;margin-bottom:16px;" onclick="testGetMe()">
+    🧪 Test GET /api/auth/me
+  </button>
+
+  <div id="result" class="result-box"></div>
+
+  <hr class="divider" />
+
+  <!-- Manual API test -->
+  <p class="section-title">Test thủ công / Local Login</p>
+  <label>Email</label>
+  <input type="email" id="email" placeholder="user@example.com" />
+  <label>Password</label>
+  <input type="password" id="password" placeholder="••••••••" />
+  <button class="btn" style="background:#0891b2;color:white;margin-bottom:16px;" onclick="testLocalLogin()">
+    🔑 Đăng nhập local (email/password)
+  </button>
+  <div id="loginResult" class="result-box"></div>
+</div>
+
+<script>
+  const BASE = 'http://localhost:3000';
+
+  async function testGetMe() {
+    const token = document.getElementById('accessToken').value.trim();
+    const box = document.getElementById('result');
+    if (!token) { showResult(box, '⚠️ Paste access token vào trước!', true); return; }
+
+    try {
+      const res = await fetch(`${BASE}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      showResult(box, JSON.stringify(data, null, 2), !res.ok);
+    } catch (e) {
+      showResult(box, '❌ Lỗi: ' + e.message, true);
+    }
+  }
+
+  async function testLocalLogin() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const box = document.getElementById('loginResult');
+
+    try {
+      const res = await fetch(`${BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ identifier: email, password })
+      });
+      const data = await res.json();
+      showResult(box, JSON.stringify(data, null, 2), !res.ok);
+      if (data.accessToken) {
+        document.getElementById('accessToken').value = data.accessToken;
+      }
+    } catch (e) {
+      showResult(box, '❌ Lỗi: ' + e.message, true);
+    }
+  }
+
+  function showResult(box, text, isError = false) {
+    box.textContent = text;
+    box.style.color = isError ? '#f87171' : '#7dd3fc';
+    box.classList.add('visible');
+  }
+</script>
+</body>
+</html>
