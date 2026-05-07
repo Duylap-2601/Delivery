@@ -58,12 +58,30 @@ model User {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
-  // Quan hệ cũ giữ nguyên
-  roles        Role[]       @relation("UserRoles")
-  tokens       Token[]
-  store        Store?       @relation("StoreOwner")
-  orders       Order[]      @relation("CustomerOrders")
-  driverDeliveries   Delivery[]   @relation("DriverDeliveries")
+  // Quan hệ
+  roles            Role[]        @relation("UserRoles")
+  tokens           Token[]
+  store            Store?        @relation("StoreOwner")
+  orders           Order[]       @relation("CustomerOrders")
+  driverDeliveries Delivery[]    @relation("DriverDeliveries")
+  addresses        UserAddress[]
+}
+
+model UserAddress {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  label       String   // "Nhà", "Văn phòng"...
+  fullAddress String   // Địa chỉ đầy đủ dạng text
+  lat         Float?   // Vĩ độ (tùy chọn, dùng cho bản đồ)
+  lng         Float?   // Kinh độ
+  isDefault   Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Role {
