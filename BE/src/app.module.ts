@@ -11,9 +11,11 @@ import { UserModule } from './modules/user/user.module';
 import { StoreModule } from './modules/store/store.module';
 import { CategoryModule } from './modules/category/category.module';
 import { ProductModule } from './modules/product/product.module';
+import { OrderModule } from './modules/order/order.module';
+import { MailModule } from './modules/mail/mail.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, RolesModule, UserModule, StoreModule, CategoryModule, ProductModule],
+  imports: [PrismaModule, MailModule, AuthModule, RolesModule, UserModule, StoreModule, CategoryModule, ProductModule, OrderModule],
   controllers: [AppController],
   providers: [
     AppService,

@@ -6,6 +6,7 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { FacebookStrategy } from './strategies/facebook.strategy';
+import { MailService } from '../mail/mail.service';
 
 @Module({
     imports: [
@@ -19,7 +20,8 @@ import { FacebookStrategy } from './strategies/facebook.strategy';
         }),
     ],
     controllers: [AuthController],
-    providers: [AuthService, JwtStrategy, GoogleStrategy, FacebookStrategy],
+    providers: [AuthService, MailService, JwtStrategy, GoogleStrategy, FacebookStrategy],
     exports: [JwtModule],
 })
 export class AuthModule {}
+

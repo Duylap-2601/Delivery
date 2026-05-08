@@ -31,6 +31,11 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum PaymentMethod {
+  COD    // Cash on Delivery
+  STRIPE // Online payment (future)
+}
+
 enum UserStatus {
   PENDING    // Mới đăng ký, chờ xác thực email/SĐT
   ACTIVE     // Đang hoạt động bình thường
@@ -59,12 +64,14 @@ model User {
   updatedAt    DateTime     @updatedAt
 
   // Quan hệ
-  roles            Role[]        @relation("UserRoles")
-  tokens           Token[]
-  store            Store?        @relation("StoreOwner")
-  orders           Order[]       @relation("CustomerOrders")
-  driverDeliveries Delivery[]    @relation("DriverDeliveries")
-  addresses        UserAddress[]
+  roles              Role[]              @relation("UserRoles")
+  tokens             Token[]
+  phoneOtps          PhoneOtp[]
+  emailVerifications EmailVerification[]
+  store              Store?              @relation("StoreOwner")
+  orders             Order[]             @relation("CustomerOrders")
+  driverDeliveries   Delivery[]          @relation("DriverDeliveries")
+  addresses          UserAddress[]
 }
 
 model UserAddress {
@@ -100,6 +107,33 @@ model Token {
   createdAt    DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Lưu OTP xác thực SĐT — tự xoá sau khi hết hạn hoặc đã dùng
+model PhoneOtp {
+  id        String   @id @default(uuid())
+  phone     String                         // SĐT cần xác thực
+  otp       String                         // Mã OTP (đã hash hoặc plain — tuỳ bạn)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attempts  Int      @default(0)           // Số lần nhập sai (max 5)
+  expiresAt DateTime                       // Hết hạn sau 5 phút
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+  @@index([userId])
+}
+
+// Lưu token xác thực email — hết hạn sau 24h
+model EmailVerification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique              // UUID random, gửi qua link email
+  expiresAt DateTime                      // Hết hạn sau 24h
+  createdAt DateTime @default(now())
 
   @@index([userId])
 }
@@ -148,24 +182,32 @@ model Product {
 }
 
 model Order {
-  id              String      @id @default(uuid())
+  id              String        @id @default(uuid())
   totalAmount     Float
   shippingAddress String
-  status          OrderStatus @default(PENDING)
+  note            String?       // Ghi chú từ customer (tuỳ chọn)
+  status          OrderStatus   @default(PENDING)
+  paymentMethod   PaymentMethod @default(COD)
+  cancelReason    String?       // Lý do huỷ đơn
+  completedAt     DateTime?     // Thời điểm hoàn thành giao hàng
   
   // Khách hàng đặt đơn
   customerId      String
-  customer        User        @relation("CustomerOrders", fields: [customerId], references: [id])
+  customer        User          @relation("CustomerOrders", fields: [customerId], references: [id])
   
   // Cửa hàng nhận đơn
   storeId         String
-  store           Store       @relation(fields: [storeId], references: [id])
+  store           Store         @relation(fields: [storeId], references: [id])
   
   items           OrderItem[]
   delivery        Delivery?
 
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([customerId])
+  @@index([storeId])
+  @@index([status])
 }
 
 model OrderItem {
@@ -181,17 +223,23 @@ model OrderItem {
 }
 
 model Delivery {
-  id         String   @id @default(uuid())
-  orderId    String   @unique
-  order      Order    @relation(fields: [orderId], references: [id])
+  id          String    @id @default(uuid())
+  orderId     String    @unique
+  order       Order     @relation(fields: [orderId], references: [id])
   
   // Tài xế nhận đơn
-  driverId   String?
-  driver     User?    @relation("DriverDeliveries", fields: [driverId], references: [id])
+  driverId    String?
+  driver      User?     @relation("DriverDeliveries", fields: [driverId], references: [id])
   
   // Tọa độ real-time
-  currentLat Float?
-  currentLng Float?
+  currentLat  Float?
+  currentLng  Float?
+
+  // Mốc thời gian giao hàng
+  pickedUpAt  DateTime? // Khi driver lấy hàng tại store
+  deliveredAt DateTime? // Khi giao thành công cho customer
   
-  updatedAt  DateTime @updatedAt
+  updatedAt   DateTime  @updatedAt
+
+  @@index([driverId])
 }

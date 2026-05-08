@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, Req, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
@@ -23,9 +23,24 @@ export class AuthController {
 
     @Public()
     @Post('register')
-    @ApiOperation({ summary: 'Register a new user account' })
+    @ApiOperation({ summary: 'Register a new user account — sends a verification email' })
     register(@Body() dto: RegisterDto) {
         return this.authService.register(dto);
+    }
+
+    @Public()
+    @Get('verify-email')
+    @ApiOperation({ summary: 'Verify email from the link sent to the user inbox' })
+    verifyEmail(@Query('token') token: string) {
+        return this.authService.verifyEmail(token);
+    }
+
+    @Public()
+    @Post('resend-verification')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Resend verification email if not yet confirmed' })
+    resendVerification(@Body('email') email: string) {
+        return this.authService.resendVerificationEmail(email);
     }
 
     @Public()
