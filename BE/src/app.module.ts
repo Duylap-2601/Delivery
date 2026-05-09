@@ -13,9 +13,11 @@ import { CategoryModule } from './modules/category/category.module';
 import { ProductModule } from './modules/product/product.module';
 import { OrderModule } from './modules/order/order.module';
 import { MailModule } from './modules/mail/mail.module';
+import { SmsModule } from './modules/sms/sms.module';
+import { GatewayModule } from './gateway/gateway.module';
 
 @Module({
-  imports: [PrismaModule, MailModule, AuthModule, RolesModule, UserModule, StoreModule, CategoryModule, ProductModule, OrderModule],
+  imports: [PrismaModule, MailModule, SmsModule, GatewayModule, AuthModule, RolesModule, UserModule, StoreModule, CategoryModule, ProductModule, OrderModule],
   controllers: [AppController],
   providers: [
     AppService,

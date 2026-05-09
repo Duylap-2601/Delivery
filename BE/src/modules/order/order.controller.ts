@@ -11,6 +11,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorator/current-user.decorator';
 import { Roles } from '../../common/decorator/role.decorator';
+import { PhoneVerified } from '../../common/decorator/phone-verified.decorator';
 import { CancelOrderDto } from './dto/cancel-order.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { QueryOrdersDto } from './dto/query-orders.dto';
@@ -25,8 +26,8 @@ export class OrderController {
     // ─── Customer ─────────────────────────────────────────────────────────────
 
     @Post()
-    @ApiOperation({ summary: '[CUSTOMER] Đặt đơn hàng mới (COD, 1 store)' })
-    createOrder(@CurrentUser() user: any, @Body() dto: CreateOrderDto) {
+    @ApiOperation({ summary: '[CUSTOMER] Đặt đơn hàng mới — yêu cầu SĐT đã xác nhận' })
+    createOrder(@PhoneVerified() user: any, @Body() dto: CreateOrderDto) {
         return this.orderService.createOrder(user.id, dto);
     }
 

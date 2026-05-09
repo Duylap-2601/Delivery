@@ -104,7 +104,35 @@ export class AuthController {
         return this.authService.getMe(user.id);
     }
 
+    // ─── Phone OTP ────────────────────────────────────────────────────────────
+
+    @UseGuards(JwtAuthGuard)
+    @Post('phone/send-otp')
+    @HttpCode(HttpStatus.OK)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Gửi OTP xác thực SĐT — yêu cầu đăng nhập trước' })
+    sendPhoneOtp(
+        @CurrentUser() user: any,
+        @Body('phone') phone: string,
+    ) {
+        return this.authService.sendPhoneOtp(user.id, phone);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('phone/verify-otp')
+    @HttpCode(HttpStatus.OK)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Xác nhận mã OTP SĐT — cập nhật isPhoneVerified = true' })
+    verifyPhoneOtp(
+        @CurrentUser() user: any,
+        @Body('phone') phone: string,
+        @Body('otp') otp: string,
+    ) {
+        return this.authService.verifyPhoneOtp(user.id, phone, otp);
+    }
+
     // ─── Google OAuth ─────────────────────────────────────────────────────────
+
 
     @Public()
     @Get('google')

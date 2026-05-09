@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { OrderStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { EventsService } from '../../gateway/events.service';
 import { CancelOrderDto } from './dto/cancel-order.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { QueryOrdersDto } from './dto/query-orders.dto';
@@ -63,7 +64,10 @@ function buildPagination(query: QueryOrdersDto) {
 
 @Injectable()
 export class OrderService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly events: EventsService,
+    ) {}
 
     // ═══════════════════════════════════════════════════════════════════════════
     // CUSTOMER
@@ -155,6 +159,15 @@ export class OrderService {
                 },
                 select: ORDER_SELECT,
             });
+        });
+
+        // Emit real-time: store nhận đơn mới
+        this.events.emitNewOrderToStore({
+            orderId: order.id,
+            storeId: order.store.id,
+            customerId: order.customer.id,
+            totalAmount: order.totalAmount,
+            itemCount: order.items.length,
         });
 
         return { message: 'Đặt hàng thành công', order };
@@ -289,6 +302,14 @@ export class OrderService {
             });
         });
 
+        // Emit real-time: customer nhận được cập nhật
+        this.events.emitOrderStatusChanged({
+            orderId: updated.id,
+            customerId: updated.customer.id,
+            storeId: updated.store.id,
+            status: updated.status,
+        });
+
         return { message: 'Đã xác nhận đơn hàng', order: updated };
     }
 
@@ -304,6 +325,20 @@ export class OrderService {
             where: { id: orderId },
             data: { status: OrderStatus.PREPARING },
             select: ORDER_SELECT,
+        });
+
+        // Emit real-time: customer + thông báo pool tài xế có đơn mới
+        this.events.emitOrderStatusChanged({
+            orderId: updated.id,
+            customerId: updated.customer.id,
+            storeId: updated.store.id,
+            status: updated.status,
+        });
+        this.events.emitNewOrderToDriverPool({
+            orderId: updated.id,
+            storeId: updated.store.id,
+            storeAddress: updated.store.address,
+            shippingAddress: updated.shippingAddress,
         });
 
         return { message: 'Đơn hàng đang được chuẩn bị', order: updated };
@@ -384,6 +419,14 @@ export class OrderService {
             });
         });
 
+        // Emit real-time: customer thấy "Đang giao"
+        this.events.emitOrderStatusChanged({
+            orderId: updated.id,
+            customerId: updated.customer.id,
+            storeId: updated.store.id,
+            status: updated.status,
+        });
+
         return { message: 'Đã nhận đơn, bắt đầu giao hàng', order: updated };
     }
 
@@ -417,6 +460,14 @@ export class OrderService {
                 },
                 select: ORDER_SELECT,
             });
+        });
+
+        // Emit real-time: customer thấy "Hoàn thành"
+        this.events.emitOrderStatusChanged({
+            orderId: updated.id,
+            customerId: updated.customer.id,
+            storeId: updated.store.id,
+            status: updated.status,
         });
 
         return { message: 'Giao hàng thành công!', order: updated };
@@ -474,6 +525,15 @@ export class OrderService {
                 },
                 select: ORDER_SELECT,
             });
+        });
+
+        // Emit real-time: thông báo huỷ đơn
+        this.events.emitOrderStatusChanged({
+            orderId: cancelled.id,
+            customerId: cancelled.customer.id,
+            storeId: cancelled.store.id,
+            status: cancelled.status,
+            cancelReason: reason,
         });
 
         return { message: 'Đơn hàng đã được huỷ', order: cancelled };
